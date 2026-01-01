@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panduan Detail - Session Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tokyo: {
+                            bg: '#1a1b26',
+                            card: '#24283b',
+                            text: '#c0caf5',
+                            accent: '#7aa2f7',
+                            magenta: '#bb9af7',
+                            cyan: '#7dcfff',
+                            red: '#f7768e',
+                            green: '#9ece6a'
+                        }
+                    },
+                    fontFamily: {
+                        jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #1a1b26; color: #c0caf5; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .step-number { background: linear-gradient(135deg, #7aa2f7, #bb9af7); }
+        .glass { background: rgba(36, 40, 59, 0.7); backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body class="min-h-screen py-12 px-4 md:px-8">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-tokyo-cyan mb-4 italic">Tutorial</h1>
+            <p class="text-tokyo-text text-lg opacity-80">Ikuti langkah demi langkah untuk menghubungkan akun Telegram Anda ke sistem tracking.</p>
+            <div class="h-1 w-24 bg-tokyo-accent mx-auto mt-6 rounded-full"></div>
+        </header>
+
+        <div class="space-y-8">
+            
+            <div class="bg-tokyo-card p-8 rounded-[2.5rem] border border-slate-700 shadow-xl">
+                <div class="flex items-start gap-6">
+                    <div class="step-number h-12 w-12 rounded-2xl flex items-center justify-center text-tokyo-bg font-black text-xl shrink-0">1</div>
+                    <div class="w-full">
+                        <h2 class="font-bold text-white mb-3">Dapatkan ID Telegram Anda</h2>
+                        <p class="mb-4 opacity-90 italic text-sm">Banyak pengguna bingung di sini, ikuti cara mudah ini:</p>
+                        <div class="p-6 bg-tokyo-bg/50 rounded-2xl border border-tokyo-accent/30">
+                            <ol class="list-decimal list-inside space-y-3 text-sm">
+                                <li>Buka Telegram, cari bot bernama <strong class="text-tokyo-cyan">@userinfobot</strong></li>
+                                <li>Klik tombol <strong class="text-tokyo-green">START</strong></li>
+                                <li>Bot akan membalas dengan beberapa baris data. Perhatikan angka di sebelah tulisan <strong class="text-white">Id:</strong></li>
+                                <li>Salin (copy) angka tersebut. Itulah <strong class="text-tokyo-magenta">ID Telegram</strong> unik Anda.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-tokyo-card p-8 rounded-[2.5rem] border border-slate-700 shadow-xl">
+                <div class="flex items-start gap-6">
+                    <div class="step-number h-12 w-12 rounded-2xl flex items-center justify-center text-tokyo-bg font-black text-xl shrink-0">2</div>
+                    <div class="w-full">
+                        <h2 class="font-bold text-white mb-3">Aktifkan @trackhayabot</h2>
+                        <p class="mb-4 opacity-90">Sistem hanya bisa mengirim pesan jika Anda sudah menyapa bot utama:</p>
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <div class="flex-1 p-5 bg-tokyo-bg/30 rounded-2xl border border-slate-700">
+                                <p class="text-xs uppercase font-bold text-tokyo-accent mb-2">Cari & Jalankan</p>
+                                <p class="text-sm">Cari <strong class="text-tokyo-cyan">@trackhayabot</strong> lalu klik <strong class="text-tokyo-green">START</strong>.</p>
+                            </div>
+                            <div class="flex-1 p-5 bg-tokyo-bg/30 rounded-2xl border border-slate-700">
+                                <p class="text-xs uppercase font-bold text-tokyo-accent mb-2">Fungsi</p>
+                                <p class="text-sm">Bot ini berfungsi sebagai pengingat (alarm) dan tempat menginput data trading.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-tokyo-card p-8 rounded-[2.5rem] border border-slate-700 shadow-xl">
+                <div class="flex items-start gap-6">
+                    <div class="step-number h-12 w-12 rounded-2xl flex items-center justify-center text-tokyo-bg font-black text-xl shrink-0">3</div>
+                    <div class="w-full">
+                        <h2 class="font-bold text-white mb-3">Input Data di Website</h2>
+                        <p class="mb-4 opacity-90">Kembali ke halaman dashboard website Anda dan isi:</p>
+                        <div class="grid grid-cols-1 gap-3 text-sm">
+                            <div class="flex items-center justify-between p-4 bg-tokyo-bg rounded-xl">
+                                <span>ID Telegram</span>
+                                <span class="text-tokyo-magenta font-bold italic">(Angka yang Anda copy dari Step 1)</span>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-tokyo-bg rounded-xl">
+                                <span>Menit Notifikasi</span>
+                                <span class="text-tokyo-cyan font-bold italic">(Berapa menit sekali alarm dikirim)</span>
+                            </div>
+                            <div class="p-4 bg-tokyo-bg rounded-xl">
+                                <p class="mb-2">Isi juga <strong class="text-tokyo-green">Saldo Awal</strong>, <strong class="text-tokyo-green">Stop-Win</strong>, dan <strong class="text-tokyo-red">Stop-Loss</strong>.</p>
+                                <p class="text-xs text-tokyo-text/60">Lalu klik <strong class="text-white">MULAI TRACKING</strong>.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-tokyo-card p-8 rounded-[2.5rem] border border-slate-700 shadow-xl border-t-4 border-t-tokyo-accent">
+                <div class="flex items-start gap-6">
+                    <div class="step-number h-12 w-12 rounded-2xl flex items-center justify-center text-tokyo-bg font-black text-xl shrink-0">4</div>
+                    <div class="w-full">
+                        <h2 class="font-bold text-white mb-3">Cara Menghentikan & Memulai Kembali</h2>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <h4 class="text-tokyo-red font-bold flex items-center gap-2">
+                                    <span>🛑</span> MENGHENTIKAN BOT
+                                </h4>
+                                <p class="text-sm opacity-90">Ketik perintah berikut langsung di chat Telegram:</p>
+                                <div class="p-4 bg-slate-900 rounded-xl border border-tokyo-red/30">
+                                    <code class="text-tokyo-red font-bold text-lg">/stop</code>
+                                    <p class="text-[10px] mt-2 text-slate-400">Bot akan berhenti mengirim alarm & input win/loss dinonaktifkan.</p>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <h4 class="text-tokyo-green font-bold flex items-center gap-2">
+                                    <span>⚡</span> MENGAKTIFKAN KEMBALI
+                                </h4>
+                                <p class="text-sm opacity-90">Perintah <code class="text-white">/start</code> hanya mengaktifkan bot di Telegram, <strong class="text-tokyo-cyan">namun untuk memulai sesi tracking baru:</strong></p>
+                                <div class="p-4 bg-slate-900 rounded-xl border border-tokyo-green/30">
+                                    <p class="text-xs text-tokyo-green font-bold mb-1">WAJIB DILAKUKAN DI WEBSITE</p>
+                                    <p class="text-sm">Klik tombol <strong class="text-white">MULAI TRACKING</strong> di website dashboard Anda.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="mt-16 text-center">
+            <button onclick="window.history.back()" class="bg-tokyo-accent hover:bg-tokyo-cyan text-tokyo-bg font-black py-4 px-12 rounded-[2rem] transition-all transform hover:scale-105 active:scale-95 shadow-2xl">
+                DASHBOARD UTAMA
+            </button>
+            <p class="mt-8 text-xs text-tokyo-text opacity-40 uppercase tracking-[0.2em]">Session Tracker &copy; 2026 - Neon DB Management</p>
+        </footer>
+    </div>
+
+</body>
+</html>
