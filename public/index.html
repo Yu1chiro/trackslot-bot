@@ -142,8 +142,7 @@
             }
         } catch (err) { alert("Gagal memulai sesi"); }
     }
-
-    async function fetchLogs() {
+async function fetchLogs() {
         const tgId = document.getElementById('tgId').value;
         if(!tgId) return;
         
@@ -152,54 +151,53 @@
             const data = await res.json();
             const body = document.getElementById('logBody');
             
+            let totalNet = 0, winCount = 0;
+            
             if(data.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-300 font-bold">Belum ada data di database</td></tr>';
+                body.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-300 font-bold">Data Kosong</td></tr>';
                 document.getElementById('wrDisplay').textContent = '0%';
                 document.getElementById('totalDisplay').textContent = 'Rp 0';
                 return;
             }
 
-            let totalNet = 0, winCount = 0;
-            
             body.innerHTML = data.map(l => {
                 const pl = parseInt(l.profit_loss);
                 totalNet += pl;
                 if(l.status === 'WIN') winCount++;
-                
                 return `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="p-6 text-xs text-slate-400 font-bold">${new Date(l.time).toLocaleTimeString('id-ID')}</td>
-                        <td class="p-6 text-right font-black ${l.status === 'WIN' ? 'text-green-600' : 'text-red-500'}">
+                    <tr class="border-b border-slate-50">
+                        <td class="p-4 text-xs font-bold text-slate-400">${new Date(l.time).toLocaleTimeString()}</td>
+                        <td class="p-4 text-right font-black ${l.status === 'WIN' ? 'text-green-600' : 'text-red-500'}">
                             ${pl >= 0 ? '+' : ''}${pl.toLocaleString('id-ID')}
                         </td>
-                        <td class="p-6 text-right font-bold text-slate-800">Rp ${parseInt(l.current_balance).toLocaleString('id-ID')}</td>
-                        <td class="p-6 text-center">
-                            <span class="px-4 py-1.5 rounded-full text-[10px] font-black ${l.status === 'WIN' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                                ${l.status}
-                            </span>
+                        <td class="p-4 text-right font-bold">Rp ${parseInt(l.current_balance).toLocaleString('id-ID')}</td>
+                        <td class="p-4 text-center">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-black ${l.status === 'WIN' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${l.status}</span>
                         </td>
                     </tr>`;
             }).join('');
             
             document.getElementById('wrDisplay').textContent = Math.round((winCount/data.length)*100) + '%';
-            document.getElementById('totalDisplay').textContent = `Rp ${totalNet.toLocaleString('id-ID')}`;
-            document.getElementById('totalDisplay').className = `text-2xl font-black ${totalNet >= 0 ? 'text-green-600' : 'text-red-500'}`;
-            
-        } catch (e) { console.error("Fetch Error"); }
+            document.getElementById('totalDisplay').textContent = `Total Net: Rp ${totalNet.toLocaleString('id-ID')}`;
+        } catch (e) {}
     }
 
     async function resetLogs() {
         const tgId = document.getElementById('tgId').value;
-        if(!tgId) return alert("Masukkan ID Telegram dahulu");
+        if(!tgId || !confirm("Bersihkan seluruh database log Anda secara permanen?")) return;
         
-        if(!confirm("Hapus semua riwayat sesi ini secara permanen dari database?")) return;
-        
-        try {
-            await fetch(`/api/logs/${tgId}`, { method: 'DELETE' });
+        const res = await fetch(`/api/logs/${tgId}`, { method: 'DELETE' });
+        if(res.ok) {
+            alert("Database Log Berhasil Dibersihkan!");
             fetchLogs();
-        } catch (e) { alert("Gagal mereset database"); }
+        }
     }
-
+    
+    // Auto-refresh data setiap 5 detik agar sinkron dengan Bot
+    setInterval(() => {
+        if(document.getElementById('tgId').value) fetchLogs();
+    }, 5000);
+    
     async function stop() {
         const tgId = document.getElementById('tgId').value;
         await fetch('/api/stop-session', {

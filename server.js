@@ -15,6 +15,7 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
+// Inisialisasi Database
 const initDb = async () => {
     const client = await pool.connect();
     try {
@@ -48,16 +49,22 @@ async function sendTelegram(chatId, text) {
             text: text,
             parse_mode: 'Markdown'
         });
-    } catch (e) {
-        console.error("Error Telegram Send:", e.message);
-    }
+    } catch (e) { console.error("Error Telegram Send:", e.message); }
 }
 
 const sessionsTimers = new Map();
 
+// Fungsi untuk menghentikan sesi (digunakan manual atau otomatis)
+async function stopSessiInternal(chatId) {
+    await pool.query('UPDATE users SET is_active = FALSE WHERE telegram_id = $1', [chatId]);
+    if (sessionsTimers.has(chatId)) {
+        clearInterval(sessionsTimers.get(chatId));
+        sessionsTimers.delete(chatId);
+    }
+}
+
 async function handleTelegramUpdate() {
     let lastUpdateId = 0;
-    // Interval dipercepat ke 1.5 detik untuk respon lebih instan
     setInterval(async () => {
         try {
             const res = await axios.get(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=20`);
@@ -73,35 +80,30 @@ async function handleTelegramUpdate() {
 
                 if (text === '/start') {
                     await pool.query('INSERT INTO users (telegram_id, is_active) VALUES ($1, TRUE) ON CONFLICT (telegram_id) DO UPDATE SET is_active = TRUE', [chatId]);
-                    await sendTelegram(chatId, "✅ *BOT DIAKTIFKAN*\nMonitoring sesi aktif. Pastikan Anda sudah mengatur target di Dashboard.");
+                    await sendTelegram(chatId, "✅ *BOT AKTIF*\nSilakan atur parameter di Dashboard Web.");
                     continue;
                 }
 
                 if (text === '/stop') {
-                    await pool.query('UPDATE users SET is_active = FALSE WHERE telegram_id = $1', [chatId]);
-                    if (sessionsTimers.has(chatId)) {
-                        clearInterval(sessionsTimers.get(chatId));
-                        sessionsTimers.delete(chatId);
-                    }
-                    await sendTelegram(chatId, "🛑 *BOT DINONAKTIFKAN*");
+                    await stopSessiInternal(chatId);
+                    await sendTelegram(chatId, "🛑 *SESI DIHENTIKAN MANUAL*");
                     continue;
                 }
 
                 if (user) {
-                    // Fitur Ringkasan Total
+                    // Fitur TOTAL (Ringkasan)
                     if (text === 'total' || text === '/total') {
                         const sumRes = await pool.query('SELECT SUM(profit_loss) as total FROM session_logs WHERE telegram_id = $1', [chatId]);
                         const netTotal = parseInt(sumRes.rows[0].total) || 0;
-                        const currentBal = parseInt(user.start_balance) + netTotal;
+                        const curBal = parseInt(user.start_balance) + netTotal;
                         
-                        let summary = `📈 *RINGKASAN SESI*\n\n`;
-                        summary += `💰 Saldo Awal: *Rp ${parseInt(user.start_balance).toLocaleString('id-ID')}*\n`;
-                        summary += `📊 Total Net: *${netTotal >= 0 ? '🟢' : '🔴'} Rp ${netTotal.toLocaleString('id-ID')}*\n`;
-                        summary += `🏦 Saldo Saat Ini: *Rp ${currentBal.toLocaleString('id-ID')}*\n\n`;
-                        summary += `🎯 Target Win: Rp ${parseInt(user.target_win).toLocaleString('id-ID')}\n`;
-                        summary += `📉 Stop Loss: Rp ${parseInt(user.stop_loss).toLocaleString('id-ID')}`;
-                        
-                        await sendTelegram(chatId, summary);
+                        await sendTelegram(chatId, 
+                            `📈 *RINGKASAN AKUN*\n\n` +
+                            `💰 Saldo Awal: Rp ${parseInt(user.start_balance).toLocaleString('id-ID')}\n` +
+                            `📊 Net Profit: *Rp ${netTotal.toLocaleString('id-ID')}*\n` +
+                            `🏦 Saldo Saat Ini: *Rp ${curBal.toLocaleString('id-ID')}*\n\n` +
+                            `Status: ${user.is_active ? '🟢 Monitoring Aktif' : '⚪ Sesi Berhenti'}`
+                        );
                         continue;
                     }
 
@@ -114,68 +116,70 @@ async function handleTelegramUpdate() {
                         if (amount === 0) continue;
 
                         const diff = isWin ? amount : -amount;
+                        const sumResBefore = await pool.query('SELECT SUM(profit_loss) as total FROM session_logs WHERE telegram_id = $1', [chatId]);
+                        const totalProfitSebelumnya = parseInt(sumResBefore.rows[0].total) || 0;
                         
-                        // Hitung Net Total saat ini sebelum insert
-                        const currentSumRes = await pool.query('SELECT SUM(profit_loss) as total FROM session_logs WHERE telegram_id = $1', [chatId]);
-                        const currentNet = parseInt(currentSumRes.rows[0].total) || 0;
-                        
-                        const newBalance = parseInt(user.start_balance) + currentNet + diff;
+                        const netTotal = totalProfitSebelumnya + diff;
+                        const newBalance = parseInt(user.start_balance) + netTotal;
 
                         await pool.query(
                             'INSERT INTO session_logs (telegram_id, current_balance, profit_loss, status) VALUES ($1, $2, $3, $4)',
                             [chatId, newBalance, diff, isWin ? 'WIN' : 'LOSS']
                         );
 
-                        const netTotal = currentNet + diff;
-
-                        let responseMsg = `📊 *DATA TERSIMPAN*\n\n`;
-                        responseMsg += `Status: ${isWin ? '✅ WIN' : '❌ LOSS'}\n`;
-                        responseMsg += `Nominal: Rp ${amount.toLocaleString('id-ID')}\n`;
-                        responseMsg += `Net Sesi: *Rp ${netTotal.toLocaleString('id-ID')}*\n`;
-                        responseMsg += `Saldo: Rp ${newBalance.toLocaleString('id-ID')}\n\n`;
+                        let responseMsg = `📊 *LOG DICATAT*\nNominal: Rp ${amount.toLocaleString('id-ID')}\nNet Sesi: *Rp ${netTotal.toLocaleString('id-ID')}*\n\n`;
                         
+                        // LOGIKA AUTO-STOP (Sesuai Flowchart)
                         if (netTotal >= parseInt(user.target_win) && parseInt(user.target_win) > 0) {
-                            responseMsg += `🏆 *TARGET WIN TERCAPAI!*\nProfit: Rp ${netTotal.toLocaleString('id-ID')}\nSegera amankan saldo Anda!`;
+                            responseMsg += `🏆 *TARGET WIN TERCAPAI!*\nAlarm dihentikan secara otomatis. Amankan profit Anda!`;
+                            await stopSessiInternal(chatId);
                         } else if (netTotal <= -parseInt(user.stop_loss) && parseInt(user.stop_loss) > 0) {
-                            responseMsg += `🛑 *STOP LOSS TERCAPAI!*\nMinus: Rp ${netTotal.toLocaleString('id-ID')}\nBerhenti sejenak, jangan paksa trading!`;
+                            responseMsg += `🛑 *STOP LOSS TERCAPAI!*\nAlarm dihentikan otomatis. Jangan paksa trading lagi!`;
+                            await stopSessiInternal(chatId);
                         } else {
-                            responseMsg += "Tetap disiplin pada plan.";
+                            responseMsg += `🔔 Alarm tetap berjalan setiap ${user.interval_minutes} menit.`;
                         }
                         
                         await sendTelegram(chatId, responseMsg);
                     }
                 }
             }
-        } catch (e) {
-            console.error("Polling Error:", e.message);
-        }
-    }, 1500);
+        } catch (e) { console.error("Polling Error:", e.message); }
+    }, 1500); // Polling cepat 1.5 detik
 }
 
 // API Routes
 app.post('/api/start-session', async (req, res) => {
-    try {
-        const { telegramId, interval, startBalance, targetWin, stopLoss } = req.body;
-        await pool.query(
-            `INSERT INTO users (telegram_id, start_balance, target_win, stop_loss, interval_minutes, is_active) 
-             VALUES ($1, $2, $3, $4, $5, TRUE) 
-             ON CONFLICT (telegram_id) DO UPDATE SET start_balance=$2, target_win=$3, stop_loss=$4, interval_minutes=$5, is_active=TRUE`,
-            [telegramId, startBalance, targetWin, stopLoss, interval]
-        );
+    const { telegramId, interval, startBalance, targetWin, stopLoss } = req.body;
+    await pool.query(
+        `INSERT INTO users (telegram_id, start_balance, target_win, stop_loss, interval_minutes, is_active) 
+         VALUES ($1, $2, $3, $4, $5, TRUE) 
+         ON CONFLICT (telegram_id) DO UPDATE SET start_balance=$2, target_win=$3, stop_loss=$4, interval_minutes=$5, is_active=TRUE`,
+        [telegramId, startBalance, targetWin, stopLoss, interval]
+    );
 
-        if (sessionsTimers.has(telegramId)) clearInterval(sessionsTimers.get(telegramId));
-        
-        await sendTelegram(telegramId, "🚀 *SESI DIMULAI*\nBot akan mengingatkan Anda setiap " + interval + " menit.");
+    if (sessionsTimers.has(telegramId)) clearInterval(sessionsTimers.get(telegramId));
+    
+    await sendTelegram(telegramId, `🚀 *TRACKING DIMULAI*\nAlarm aktif setiap ${interval} menit.\nTarget Win: Rp ${parseInt(targetWin).toLocaleString()}\nStop Loss: Rp ${parseInt(stopLoss).toLocaleString()}`);
 
-        const timer = setInterval(async () => {
-            await sendTelegram(telegramId, "🔔 *REMINDER UPDATE*\nBerapa hasil trade terakhir? Ketik: *Win [angka]* atau *Loss [angka]*");
-        }, interval * 60000);
-        
-        sessionsTimers.set(telegramId, timer);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    const timer = setInterval(async () => {
+        await sendTelegram(telegramId, "🔔 *ALARM NOTIFIKASI*\nKetik *Win [angka]* atau *Loss [angka]* untuk update hasil.");
+    }, interval * 60000);
+    
+    sessionsTimers.set(telegramId, timer);
+    res.json({ success: true });
+});
+
+app.delete('/api/logs/:telegramId', async (req, res) => {
+    // Menghapus total riwayat log untuk telegram_id tertentu (Mirip Truncate tapi spesifik user)
+    await pool.query('DELETE FROM session_logs WHERE telegram_id = $1', [req.params.telegramId]);
+    res.json({ success: true });
+});
+
+app.post('/api/stop-session', async (req, res) => {
+    await stopSessiInternal(req.body.telegramId);
+    await sendTelegram(req.body.telegramId, "🛑 *SESI BERAKHIR (VIA WEB)*");
+    res.json({ success: true });
 });
 
 app.get('/api/logs/:telegramId', async (req, res) => {
@@ -185,30 +189,10 @@ app.get('/api/logs/:telegramId', async (req, res) => {
     } catch (e) { res.json([]); }
 });
 
-app.delete('/api/logs/:telegramId', async (req, res) => {
-    try {
-        // Menggunakan DELETE dengan Telegram ID untuk membersihkan data spesifik user
-        await pool.query('DELETE FROM session_logs WHERE telegram_id = $1', [req.params.telegramId]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/stop-session', async (req, res) => {
-    const { telegramId } = req.body;
-    await pool.query('UPDATE users SET is_active = FALSE WHERE telegram_id = $1', [telegramId]);
-    if (sessionsTimers.has(telegramId)) {
-        clearInterval(sessionsTimers.get(telegramId));
-        sessionsTimers.delete(telegramId);
-    }
-    await sendTelegram(telegramId, "🛑 *SESI BERAKHIR*");
-    res.json({ success: true });
-});
-
 const startServer = async () => {
     await initDb();
     handleTelegramUpdate();
     const port = process.env.PORT || 3000;
     app.listen(port, () => console.log(`Server running on port ${port}`));
 };
-
 startServer();
