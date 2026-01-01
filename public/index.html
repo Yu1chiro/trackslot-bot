@@ -3,60 +3,89 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Professional Session Tracker - Neon DB</title>
+    <title>Session Tracker Pro - Neon DB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fbff; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f0f4f8; }
+        .card-glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8">
 
     <div class="max-w-6xl mx-auto space-y-6">
-        <header class="flex flex-col md:flex-row justify-between items-center bg-white p-8 rounded-[2.5rem] shadow-sm border border-blue-100 gap-4">
+        <header class="flex flex-col md:flex-row justify-between items-center bg-white p-8 rounded-[2.5rem] shadow-xl border border-blue-50 gap-4">
             <div>
                 <h1 class="text-3xl font-black text-blue-600">Session <span class="text-slate-800">Tracker</span></h1>
-                <p class="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Neon DB Persistent Management</p>
+                <p class="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Database Persistence Mode</p>
             </div>
-            <div id="status" class="px-6 py-3 rounded-2xl font-bold bg-slate-100 text-slate-400 flex items-center gap-2">OFFLINE</div>
+            <div id="status" class="px-6 py-3 rounded-2xl font-bold bg-slate-100 text-slate-400 flex items-center gap-2 transition-all">OFFLINE</div>
         </header>
 
         <div class="grid lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 bg-white rounded-[2.5rem] p-8 shadow-sm border border-blue-100 space-y-6">
+            <div class="lg:col-span-2 bg-white rounded-[2.5rem] p-8 shadow-xl border border-blue-50 space-y-6">
                 <div class="grid md:grid-cols-2 gap-4">
-                    <input id="tgId" type="text" oninput="fetchLogs()" placeholder="ID Telegram User" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-semibold focus:ring-2 focus:ring-blue-500">
-                    <input id="interval" type="number" placeholder="Menit Notifikasi" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-semibold">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Telegram ID</label>
+                        <input id="tgId" type="text" oninput="fetchLogs()" placeholder="Contoh: 12345678" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-semibold focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Interval (Menit)</label>
+                        <input id="interval" type="number" placeholder="Menit" value="5" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-semibold">
+                    </div>
                 </div>
                 <div class="grid md:grid-cols-3 gap-4">
-                    <input id="startBal" type="text" onkeyup="formatIDR(this)" placeholder="Saldo Awal" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-blue-600">
-                    <input id="targetWin" type="text" onkeyup="formatIDR(this)" placeholder="Stop-Win (Target)" class="w-full p-4 bg-green-50 border border-green-100 rounded-2xl outline-none font-bold text-green-600">
-                    <input id="stopLoss" type="text" onkeyup="formatIDR(this)" placeholder="Stop-Loss (Batas)" class="w-full p-4 bg-red-50 border border-red-100 rounded-2xl outline-none font-bold text-red-600">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase ml-2">Saldo Awal</label>
+                        <input id="startBal" type="text" onkeyup="formatIDR(this)" placeholder="Rp 0" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-blue-600">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase ml-2 text-green-600">Target Win</label>
+                        <input id="targetWin" type="text" onkeyup="formatIDR(this)" placeholder="Rp 0" class="w-full p-4 bg-green-50 border border-green-100 rounded-2xl outline-none font-bold text-green-600">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase ml-2 text-red-600">Stop Loss</label>
+                        <input id="stopLoss" type="text" onkeyup="formatIDR(this)" placeholder="Rp 0" class="w-full p-4 bg-red-50 border border-red-100 rounded-2xl outline-none font-bold text-red-600">
+                    </div>
                 </div>
-                <button onclick="start()" id="btnStart" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black text-xl shadow-xl transition-all active:scale-95">MULAI TRACKING</button>
-                <button onclick="stop()" id="btnStop" class="hidden w-full bg-red-500 text-white py-5 rounded-[2rem] font-black text-xl shadow-xl transition-all">HENTIKAN TRACKER</button>
+                <button onclick="start()" id="btnStart" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-[2rem] font-black text-xl shadow-lg transition-all active:scale-95">MULAI TRACKING</button>
+                <button onclick="stop()" id="btnStop" class="hidden w-full bg-red-500 hover:bg-red-600 text-white py-5 rounded-[2rem] font-black text-xl shadow-lg transition-all">HENTIKAN TRACKER</button>
             </div>
             
-            <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-blue-100 flex flex-col justify-center text-center space-y-2">
-                <div id="wrDisplay" class="text-6xl font-black text-blue-600">0%</div>
-                <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Win Rate Sesi</p>
-                <div id="totalDisplay" class="text-xl font-bold text-slate-800 pt-4">Total Net: Rp 0</div>
+            <div class="bg-white rounded-[2.5rem] p-8 shadow-xl border border-blue-50 flex flex-col justify-center text-center space-y-4">
+                <div>
+                    <div id="wrDisplay" class="text-6xl font-black text-blue-600">0%</div>
+                    <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Win Rate Sesi</p>
+                </div>
+                <div class="h-[1px] bg-slate-100 w-full"></div>
+                <div>
+                    <div id="totalDisplay" class="text-2xl font-black text-slate-800">Rp 0</div>
+                    <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Total Net Profit</p>
+                </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-[2.5rem] shadow-sm border border-blue-100 overflow-hidden">
-            <div class="p-6 border-b flex justify-between items-center bg-slate-50/50">
-                <span class="font-bold flex items-center gap-2"><span class="w-3 h-3 bg-blue-600 rounded-full"></span> Riwayat Database Neon</span>
+        <div class="bg-white rounded-[2.5rem] shadow-xl border border-blue-50 overflow-hidden">
+            <div class="p-6 border-b flex flex-wrap justify-between items-center bg-slate-50/50 gap-4">
+                <span class="font-bold flex items-center gap-2"><span class="w-3 h-3 bg-blue-600 rounded-full animate-pulse"></span> Riwayat Real-time Database</span>
                 <div class="flex gap-4">
-                    <button onclick="fetchLogs()" class="text-blue-600 text-xs font-bold uppercase tracking-widest">Refresh</button>
-                    <button onclick="resetLogs()" class="text-red-500 text-xs font-bold uppercase tracking-widest">Reset Database</button>
+                    <button onclick="fetchLogs()" class="text-blue-600 text-xs font-bold uppercase hover:underline">Refresh Data</button>
+                    <button onclick="resetLogs()" class="text-red-500 text-xs font-bold uppercase hover:underline">Reset Riwayat</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-black tracking-widest">
-                        <tr><th class="p-6">Waktu</th><th class="p-6 text-right">Saldo Terakhir</th><th class="p-6 text-right">Profit/Loss</th><th class="p-6 text-center">Status</th></tr>
+                        <tr>
+                            <th class="p-6">Waktu</th>
+                            <th class="p-6 text-right">Profit / Loss</th>
+                            <th class="p-6 text-right">Saldo Berjalan</th>
+                            <th class="p-6 text-center">Status</th>
+                        </tr>
                     </thead>
-                    <tbody id="logBody" class="divide-y divide-slate-50"></tbody>
+                    <tbody id="logBody" class="divide-y divide-slate-50">
+                        <tr><td colspan="4" class="p-10 text-center text-slate-300 font-bold">Masukkan ID Telegram untuk melihat data</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -76,62 +105,99 @@
         el.value = val ? new Intl.NumberFormat('id-ID').format(val) : "";
     }
 
-    function parse(s) { return Number(s.replace(/\./g, "")); }
+    function parse(s) { 
+        if(!s) return 0;
+        return Number(s.replace(/\./g, "")); 
+    }
 
     async function start() {
         const tgIdValue = document.getElementById('tgId').value;
         const payload = {
             telegramId: tgIdValue,
-            interval: document.getElementById('interval').value,
+            interval: document.getElementById('interval').value || 5,
             startBalance: parse(document.getElementById('startBal').value),
             targetWin: parse(document.getElementById('targetWin').value),
             stopLoss: parse(document.getElementById('stopLoss').value)
         };
         
-        if(!payload.telegramId || !payload.interval) return alert("ID Telegram & Interval wajib diisi!");
+        if(!payload.telegramId) return alert("ID Telegram wajib diisi!");
         
         localStorage.setItem('tgId', tgIdValue);
 
-        const res = await fetch('/api/start-session', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
+        try {
+            const res = await fetch('/api/start-session', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
 
-        if(res.ok) {
-            document.getElementById('status').textContent = "🟢 AKTIF";
-            document.getElementById('status').className = "px-6 py-3 rounded-2xl font-bold bg-green-50 text-green-600 flex items-center gap-2";
-            document.getElementById('btnStart').classList.add('hidden');
-            document.getElementById('btnStop').classList.remove('hidden');
-            fetchLogs();
-            window.refreshLogsInt = setInterval(fetchLogs, 5000);
-        }
+            if(res.ok) {
+                document.getElementById('status').textContent = "🟢 AKTIF";
+                document.getElementById('status').className = "px-6 py-3 rounded-2xl font-bold bg-green-50 text-green-600 flex items-center gap-2";
+                document.getElementById('btnStart').classList.add('hidden');
+                document.getElementById('btnStop').classList.remove('hidden');
+                fetchLogs();
+                if(window.refreshLogsInt) clearInterval(window.refreshLogsInt);
+                window.refreshLogsInt = setInterval(fetchLogs, 5000);
+            }
+        } catch (err) { alert("Gagal memulai sesi"); }
     }
 
     async function fetchLogs() {
         const tgId = document.getElementById('tgId').value;
         if(!tgId) return;
-        const res = await fetch(`/api/logs/${tgId}`);
-        const data = await res.json();
-        const body = document.getElementById('logBody');
-        let total = 0, winCount = 0;
         
-        body.innerHTML = data.map(l => {
-            const pl = parseInt(l.profit_loss);
-            total += pl;
-            if(l.status === 'WIN') winCount++;
-            return `<tr><td class="p-6 text-xs text-slate-400 font-bold">${new Date(l.time).toLocaleTimeString()}</td><td class="p-6 text-right font-bold text-slate-800">Rp ${parseInt(l.current_balance).toLocaleString()}</td><td class="p-6 text-right font-black ${l.status === 'WIN' ? 'text-green-600' : 'text-red-500'}">${l.status === 'WIN' ? '+' : ''}${pl.toLocaleString()}</td><td class="p-6 text-center"><span class="px-3 py-1 rounded-full text-[10px] font-black ${l.status === 'WIN' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${l.status}</span></td></tr>`;
-        }).join('');
-        
-        document.getElementById('wrDisplay').textContent = data.length ? Math.round((winCount/data.length)*100)+'%' : '0%';
-        document.getElementById('totalDisplay').textContent = `Total Net: Rp ${total.toLocaleString('id-ID')}`;
+        try {
+            const res = await fetch(`/api/logs/${tgId}`);
+            const data = await res.json();
+            const body = document.getElementById('logBody');
+            
+            if(data.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-300 font-bold">Belum ada data di database</td></tr>';
+                document.getElementById('wrDisplay').textContent = '0%';
+                document.getElementById('totalDisplay').textContent = 'Rp 0';
+                return;
+            }
+
+            let totalNet = 0, winCount = 0;
+            
+            body.innerHTML = data.map(l => {
+                const pl = parseInt(l.profit_loss);
+                totalNet += pl;
+                if(l.status === 'WIN') winCount++;
+                
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-6 text-xs text-slate-400 font-bold">${new Date(l.time).toLocaleTimeString('id-ID')}</td>
+                        <td class="p-6 text-right font-black ${l.status === 'WIN' ? 'text-green-600' : 'text-red-500'}">
+                            ${pl >= 0 ? '+' : ''}${pl.toLocaleString('id-ID')}
+                        </td>
+                        <td class="p-6 text-right font-bold text-slate-800">Rp ${parseInt(l.current_balance).toLocaleString('id-ID')}</td>
+                        <td class="p-6 text-center">
+                            <span class="px-4 py-1.5 rounded-full text-[10px] font-black ${l.status === 'WIN' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${l.status}
+                            </span>
+                        </td>
+                    </tr>`;
+            }).join('');
+            
+            document.getElementById('wrDisplay').textContent = Math.round((winCount/data.length)*100) + '%';
+            document.getElementById('totalDisplay').textContent = `Rp ${totalNet.toLocaleString('id-ID')}`;
+            document.getElementById('totalDisplay').className = `text-2xl font-black ${totalNet >= 0 ? 'text-green-600' : 'text-red-500'}`;
+            
+        } catch (e) { console.error("Fetch Error"); }
     }
 
     async function resetLogs() {
-        if(!confirm("Hapus semua riwayat permanen di database?")) return;
         const tgId = document.getElementById('tgId').value;
-        await fetch(`/api/logs/${tgId}`, { method: 'DELETE' });
-        fetchLogs();
+        if(!tgId) return alert("Masukkan ID Telegram dahulu");
+        
+        if(!confirm("Hapus semua riwayat sesi ini secara permanen dari database?")) return;
+        
+        try {
+            await fetch(`/api/logs/${tgId}`, { method: 'DELETE' });
+            fetchLogs();
+        } catch (e) { alert("Gagal mereset database"); }
     }
 
     async function stop() {
