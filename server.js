@@ -71,7 +71,7 @@ async function handleTelegramUpdate() {
                 
                 if (text === '/start') {
                     await pool.query('UPDATE users SET is_active = TRUE WHERE telegram_id = $1', [chatId]);
-                    await sendTelegram(chatId, "✅ *BOT DIAKTIFKAN*\nMonitoring sesi trading aktif.");
+                    await sendTelegram(chatId, "✅ *BOT DIAKTIFKAN*\nMonitoring sesi aktif.");
                     continue;
                 }
                 if (text === '/stop') {
